@@ -20,7 +20,7 @@ ${PROG}: ${OBJS}
 	${CXX} -o $@ ${OBJS}
 
 clean:
-	rm -f ${OBJS}
+	rm -f ${OBJS} ${PROG}
 
 .PHONY: clean
 
