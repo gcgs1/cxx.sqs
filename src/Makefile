@@ -9,7 +9,7 @@ INCLUDE = -I$(HOME)/include
 	${CXX} ${CXXFLAGS} ${INCLUDE} -c $<
 
 PROG = ../bin/sqs.x
-CXXSRC = main.cxx 
+CXXSRC = main.cxx utils.cxx
 OBJS = ${CXXSRC:.cxx=.o}
 
 default: ${PROG}
