@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <vector>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 
@@ -21,3 +22,7 @@ ublas::vector<double> cross3(ublas::vector<double> a,
                              ublas::vector<double> b);
 
 ublas::matrix<double> inv3(ublas::matrix<double> a);
+
+long linear_search(const std::vector<double>& vec,
+		   double a,
+		   double tol);

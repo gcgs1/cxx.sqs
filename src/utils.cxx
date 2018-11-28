@@ -8,6 +8,7 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <cmath>
 #include "utils.hxx"
 
 double det3(ublas::matrix<double> a) {
@@ -52,4 +53,18 @@ ublas::matrix<double> inv3(ublas::matrix<double> a) {
   ia(2,2) = a(0,0)*a(1,1) - a(1,0)*a(0,1);
   
   return ia/det;
+}
+
+long linear_search(const std::vector<double>& vec,
+		   double a,
+		   double tol) {
+
+  for (long i = 0; i < vec.size(); i++) {
+    double value = fabs(vec[i] - a);
+    if (value < tol) {
+      return i;
+    }
+  }
+  
+  return vec.size();
 }

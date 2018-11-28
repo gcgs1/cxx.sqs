@@ -2,7 +2,7 @@
 
 CXX = g++
 #CXXFLAGS = -O2 -march=native -std=c++17
-CXXFLAGS = -Og -std=c++17
+CXXFLAGS = -Og -std=c++17 #-Wall
 INCLUDE = -I$(HOME)/include
 
 .cxx.o:

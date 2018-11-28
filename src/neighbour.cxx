@@ -35,7 +35,7 @@ void Neighbour::GetSiteList(double rmax) {
   ublas::vector<long> rcut(3);
   ublas::vector<long> sext(3);
   
-  for (long i = 0; i < 3; i++) {
+  for (auto i = 0; i < 3; i++) {
     ublas::matrix_row<ublas::matrix<double>> p(LatticeVectors,i);
     rcut(i) = static_cast<long>(rmax/ublas::norm_2(p)+2);
     sext(i) = 2*rcut(i) + 1;
@@ -46,7 +46,7 @@ void Neighbour::GetSiteList(double rmax) {
   Neighbour::LinkedListBlocks(rmax);
   
   ublas::vector<double> cent(3);
-  for (int i = 0; i < 3; i++) cent(i) = 0.5*(sext(i) - 1);
+  for (auto i = 0; i < 3; i++) cent(i) = 0.5*(sext(i) - 1);
   Centre = cent;
   
   long product = boost::accumulate(sext,1,std::multiplies<long>());
@@ -64,13 +64,13 @@ void Neighbour::GetSiteList(double rmax) {
   ublas::matrix_row<ublas::matrix<double>> p2(LatticeVectors,2);
   
   long icnt = 0;
-  for (long i = 0; i < NumberOfAtoms; i++) {
+  for (auto i = 0; i < NumberOfAtoms; i++) {
     ublas::matrix_row<ublas::matrix<double>> b(BasisVectors,i);
     ublas::matrix_row<ublas::matrix<double>> xb(InverseBasisVectors,i);
-    for (long j = -rcut(0); j <= rcut(0); j++) {
-      for (long k = -rcut(1); k <= rcut(1); k++) {
-        for (long l = -rcut(2); l <= rcut(2); l++) {
-          for (int a = 0; a < 3; a++) {
+    for (auto j = -rcut(0); j <= rcut(0); j++) {
+      for (auto k = -rcut(1); k <= rcut(1); k++) {
+        for (auto l = -rcut(2); l <= rcut(2); l++) {
+          for (auto a = 0; a < 3; a++) {
             sites(icnt,a) = b(a) + j*p0(a) + k*p1(a) + l*p2(a);
             sitex(a) = xb(a);
           }
@@ -112,7 +112,7 @@ void Neighbour::LinkedListBlocks(double rmax) {
   w(2) = ublas::inner_prod(p3,c3)/ublas::norm_2(c3);
 
   ublas::vector<long> blks(3);
-  for (long i = 0; i < 3; i++) {
+  for (auto i = 0; i < 3; i++) {
     blks(i) = static_cast<long>(SupercellExtension(i)*w(i)/rmax);
     if (blks(i) < 3) blks(i) = 3;
   }
@@ -130,14 +130,14 @@ void Neighbour::GetNhbrList(double rmax) {
   ublas::vector<long> ptrs(650*NumberOfAtoms);
 
   unsigned long nsum = 0;
-  for (long i = 0; i < NumberOfAtoms; i++) {
+  for (auto i = 0; i < NumberOfAtoms; i++) {
     tot(i) = 0;
     ublas::matrix_row<ublas::matrix<double>> b(BasisVectors,i);
     ublas::vector<double> bx = ublas::prod(b,InverseLatticeVectors);
     unsigned long icell = FindCell(bx);
-    for (long imx = -1; imx <= 1; imx++) {
-      for (long imy = -Blocks(0); imy <= Blocks(0); imy += Blocks(0)) {
-        for (long imz = -Blocks(0)*Blocks(1);
+    for (auto imx = -1; imx <= 1; imx++) {
+      for (auto imy = -Blocks(0); imy <= Blocks(0); imy += Blocks(0)) {
+        for (auto imz = -Blocks(0)*Blocks(1);
              imz <= Blocks(0)*Blocks(1);
              imz += Blocks(0)*Blocks(1)) {
           long jcell = icell + imx + imy + imz;
@@ -169,7 +169,7 @@ unsigned long Neighbour::FindCell(ublas::vector<double> sitex){
   ublas::vector<long> ixs(3);
   ublas::vector<double> scent = sitex + Centre;
 
-  for (int i = 0; i < 3; i++) {
+  for (auto i = 0; i < 3; i++) {
     ixs(i) = static_cast<long>(Blocks(i)*scent(i)/SupercellExtension(i));
     if (ixs(i) > Blocks(i)) ixs(i) = Blocks(i)-1;
   }

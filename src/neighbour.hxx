@@ -33,13 +33,13 @@ public:
   ublas::vector<long> Total;
   ublas::vector<long> Pointers;
   ublas::vector<long> BasisPointers;
+  ublas::matrix<double> Sites;
   
 private:
   
-  unsigned long NumberOfAtoms;
+  long NumberOfAtoms;
   ublas::matrix<double> LatticeVectors;
   ublas::matrix<double> BasisVectors;
-  ublas::matrix<double> Sites;
   ublas::vector<long> SupercellExtension;
   ublas::matrix<double> InverseLatticeVectors;
   ublas::matrix<double> InverseBasisVectors;
