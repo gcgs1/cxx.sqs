@@ -8,7 +8,9 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <boost/range/numeric.hpp>
 #include <cmath>
+
 #include "utils.hxx"
 
 double det3(ublas::matrix<double> a) {
@@ -68,3 +70,7 @@ long linear_search(const std::vector<double>& vec,
   
   return vec.size();
 }
+
+//inline long product(ublas::vector<long> vec) {
+//  return boost::accumulate(vec,1,std::multiplies<long>());
+//}

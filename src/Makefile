@@ -9,7 +9,8 @@ INCLUDE = -I$(HOME)/include
 	${CXX} ${CXXFLAGS} ${INCLUDE} -c $<
 
 PROG = ../bin/sqs.x
-CXXSRC = main.cxx utils.cxx neighbour.cxx clusters.cxx
+CXXSRC = main.cxx utils.cxx neighbour.cxx clusters.cxx \
+	 supercell.cxx
 OBJS = ${CXXSRC:.cxx=.o}
 
 default: ${PROG}

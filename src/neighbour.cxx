@@ -8,10 +8,7 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include <functional>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/range/numeric.hpp>
-
 #include "neighbour.hxx"
 #include "utils.hxx"
 
@@ -49,8 +46,8 @@ void Neighbour::GetSiteList(double rmax) {
   for (auto i = 0; i < 3; i++) cent(i) = 0.5*(sext(i) - 1);
   Centre = cent;
   
-  long product = boost::accumulate(sext,1,std::multiplies<long>());
-  long smax = NumberOfAtoms*product;
+  //long product = boost::accumulate(sext,1,std::multiplies<long>());
+  long smax = NumberOfAtoms*product(sext);
   long blks = boost::accumulate(Blocks,1,std::multiplies<long>());
   
   ublas::matrix<double> sites(smax,3);

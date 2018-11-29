@@ -10,10 +10,16 @@
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/range/algorithm.hpp>
 #include <iostream>
 
 #include "clusters.hxx"
 #include "neighbour.hxx"
+#include "supercell.hxx"
 #include "utils.hxx"
 
 namespace ublas = boost::numeric::ublas;
@@ -66,6 +72,30 @@ int main(void) {
     std::cout << clusters.PairClusters[i] << ' ';
     std::cout << clusters.PairCount[i] << '\n';
   }
-      
+
+  /* Supercell Creation */
+  ublas::vector<long> sext(3);
+  sext(0) = 10; sext(1) = 10; sext(2) = 10;
+  std::cout << sext << std::endl;
+
+  double concentration = 0.05;
+    
+  Supercell supercell = Supercell(sext,nbas,plat,basis,concentration);
+  supercell.Build();
+
+  /* Random Number Generator */
+  boost::mt19937 mt(time(0));
+  boost::uniform_int<> uni_dist;
+  boost::variate_generator<boost::mt19937&,boost::uniform_int<>>
+    generator(mt,uni_dist);
+  
+  std::cout << time(0) << std::endl;
+  
+  std::cout << supercell.pointers << std::endl;
+  boost::range::random_shuffle(supercell.pointers,generator);
+  std::cout << supercell.pointers << std::endl;
+
+  
+  
   return 0;
 }

@@ -10,9 +10,11 @@
 
 #pragma once
 
-#include <vector>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/range/numeric.hpp>
+#include <functional>
+#include <vector>
 
 namespace ublas = boost::numeric::ublas;
 
@@ -26,3 +28,7 @@ ublas::matrix<double> inv3(ublas::matrix<double> a);
 long linear_search(const std::vector<double>& vec,
 		   double a,
 		   double tol);
+
+inline long product(ublas::vector<long> vec) {
+  return boost::accumulate(vec,1,std::multiplies<long>());
+}
