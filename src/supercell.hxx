@@ -25,8 +25,6 @@ public:
             ublas::matrix<double> primitive_basis_vectors,
 	    double concentration);
 
-  void Build();
-
   ublas::vector<long> supercell_extension;
   long number_of_atoms;
   ublas::matrix<double> lattice_vectors;

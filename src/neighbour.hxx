@@ -22,6 +22,8 @@ public:
   Neighbour(unsigned long nbas,
             ublas::matrix<double> plat,
             ublas::matrix<double> basis);
+
+  ~Neighbour();
   
   void SetInverseLattice(ublas::matrix<double> iplat,
                          ublas::matrix<double> xbasis);

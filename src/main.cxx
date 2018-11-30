@@ -8,16 +8,19 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <boost/format.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/variate_generator.hpp>
 #include <boost/range/algorithm.hpp>
+#include <fstream>
 #include <iostream>
 
-#include "clusters.hxx"
+#include "correlation.hxx"
 #include "neighbour.hxx"
 #include "supercell.hxx"
 #include "utils.hxx"
@@ -30,7 +33,7 @@ int main(void) {
   unsigned long nbas = 1;
   ublas::matrix<double> plat(3,3);
   ublas::matrix<double> basis(nbas,3);
-  double rmax = 2.0;
+  double rmax = 2.5;
 
   /* Set Basis Vectors */
   basis(0,0) = 0.0; basis(0,1) = 0.0; basis(0,2) = 0.0;
@@ -40,8 +43,6 @@ int main(void) {
   basis(0,0) = 0.0; basis(0,1) = 0.0; basis(0,2) = 0.0;
   basis(1,0) = 0.5; basis(1,1) = std::sqrt(3)/6; basis(1,2) = 0.5*q;
   */
-
-  std::cout << basis << std::endl;
   
   /* Set Lattice Vectors */
   plat(0,0) =  0.5; plat(0,1) =  0.5; plat(0,2) = -0.5;
@@ -54,48 +55,144 @@ int main(void) {
   plat(2,0) =  1.0; plat(2,1) =              0.0; plat(2,2) =   q;
   */
 
-  std::cout << plat << std::endl;
+  /* Primitive I/O */
+  std::cout << boost::format("Primitive Number of Atoms : %8d\n") % nbas;
 
-  //exit(0);
+  std::cout << boost::format("Pair Cut Off Radius       : %16.7f\n") % rmax;
   
-  ublas::matrix<double> iplat = inv3(plat);
-  ublas::matrix<double> xbasis = ublas::prod(basis,iplat);
-  
-  Neighbour neighbour_table = Neighbour(nbas,plat,basis);
-  neighbour_table.SetInverseLattice(iplat,xbasis);
-  neighbour_table.GetNhbrList(rmax);
-  
-  Clusters clusters = Clusters();
-  clusters.FindClusters(neighbour_table,basis);
+  std::cout << boost::format("Primitive Lattice Vectors : %16.7f %16.7f %16.7f\n")
+    % plat(0,0) % plat(0,1) % plat(0,2);
+  std::cout << boost::format("                            %16.7f %16.7f %16.7f\n")
+    % plat(1,0) % plat(1,1) % plat(1,2);
+  std::cout << boost::format("                            %16.7f %16.7f %16.7f\n")
+    % plat(2,0) % plat(2,1) % plat(2,2);
 
-  for (auto i = 0; i < clusters.Number; i++) {
-    std::cout << clusters.PairClusters[i] << ' ';
-    std::cout << clusters.PairCount[i] << '\n';
+  for (auto i = 0; i < nbas; i++) {
+    ublas::matrix_row<ublas::matrix<double>> b(basis,i);
+    if (i == 0) {
+      std::cout << boost::format("Primitive Basis Vectors   : %16.7f %16.7f %16.7f\n")
+	% b(0) % b(1) % b(2);
+    } else {
+      std::cout << boost::format("                          : %16.7f %16.7f %16.7f\n")
+        % b(0) % b(1) % b(2);
+    }
   }
-
+  
   /* Supercell Creation */
   ublas::vector<long> sext(3);
-  sext(0) = 10; sext(1) = 10; sext(2) = 10;
-  std::cout << sext << std::endl;
+  sext(0) = 30; sext(1) = 30; sext(2) = 30;
 
   double concentration = 0.05;
-    
+  
   Supercell supercell = Supercell(sext,nbas,plat,basis,concentration);
-  supercell.Build();
 
+  /* Supercell I/O */
+  std::cout << boost::format("Supercell Number of Atoms : %8d\n")
+    % supercell.number_of_atoms;
+    
+  std::cout << boost::format("Supercell Lattice Vectors : %16.7f %16.7f %16.7f\n")
+    % supercell.lattice_vectors(0,0)
+    % supercell.lattice_vectors(0,1)
+    % supercell.lattice_vectors(0,2);
+  std::cout << boost::format("                            %16.7f %16.7f %16.7f\n")
+    % supercell.lattice_vectors(1,0)
+    % supercell.lattice_vectors(1,1)
+    % supercell.lattice_vectors(1,2);
+  std::cout << boost::format("                            %16.7f %16.7f %16.7f\n")
+    % supercell.lattice_vectors(2,0)
+    % supercell.lattice_vectors(2,1)
+    % supercell.lattice_vectors(2,2);
+  
   /* Random Number Generator */
-  boost::mt19937 mt(time(0));
+  //boost::mt19937 mt(time(0));
+  boost::mt19937 mt;
   boost::uniform_int<> uni_dist;
   boost::variate_generator<boost::mt19937&,boost::uniform_int<>>
     generator(mt,uni_dist);
-  
-  std::cout << time(0) << std::endl;
-  
-  std::cout << supercell.pointers << std::endl;
-  boost::range::random_shuffle(supercell.pointers,generator);
-  std::cout << supercell.pointers << std::endl;
 
+  long nitf = 10000;
+  double term = 0.0001;
+
+  std::cout << boost::format("Number of Iterations      : %8d\n") % nitf;
+  std::cout << boost::format("Concentration             : %16.7f\n") % concentration;
+  std::cout << boost::format("Perfect Correlation       : %16.7f\n")
+    % ((2*concentration-1)*(2*concentration-1)); 
+  std::cout << boost::format("SQS Accept Tolerance      : %16.7f\n\n") % term;
+
+  double best = 1.0;
+  long snum = 0;
   
+  for (long n = 0; n < nitf; n++) { 
+    
+    boost::range::random_shuffle(supercell.pointers,generator);
+    
+    /* Supercell Inverse */
+    ublas::matrix<double> isplat = inv3(supercell.lattice_vectors);
+    ublas::matrix<double> xsbasis(supercell.number_of_atoms,3);
+    for (auto i = 0; i < supercell.number_of_atoms; i++) {
+      ublas::matrix_row<ublas::matrix<double>> b(supercell.basis_vectors,i);
+      auto xb = prod(b,isplat);
+      for (auto a = 0; a < 3; a++) {
+	xsbasis(i,a) = xb(a);
+      }
+    }
+    
+    Neighbour neighbour = Neighbour(supercell.number_of_atoms,
+				    supercell.lattice_vectors,
+				    supercell.basis_vectors);
+    
+    neighbour.SetInverseLattice(isplat,xsbasis);
+    neighbour.GetNhbrList(rmax);
+    
+    /* Correlation Function Calculation */
+    Correlation correlation = Correlation();
+    correlation.Calculate(neighbour,supercell);
+    double result = correlation.ErrorFunction(concentration);
+
+    bool bestq = (result < best);
+    bool writeq = (result < term);
+    if (bestq) best = result;
+    
+    std::cout << boost::format("Iteration                 : %8d\n") % n;
+    std::cout << boost::format("Mean Error                : %16.7f\n") % result;
+    std::cout << boost::format("Least Error               : %16.7f\n") % best;
+    if (writeq) {
+      snum++;
+      std::cout << "Accept\n";
+    } else {
+      std::cout << "Reject\n";
+    }
+
+    
+    for (auto i = 0; i < correlation.number; i++) {
+      std::cout << boost::format("  %16.7f  %5d  %16.7f  %16.7f\n")
+	% correlation.pair_clusters[i]
+	% (correlation.pair_count[i]/supercell.number_of_atoms)
+	% correlation.pair_correlations[i]
+	% correlation.errors[i];
+    }
+    std::cout << std::endl;
+
+    /* File Writing */
+    if (writeq) {
+      std::ofstream outfile;
+      boost::format fmt = boost::format("sqs.%d.out") % snum;
+      outfile.open(fmt.str());
+      outfile << boost::format("# special quasirandom structure\n");
+      for (auto i = 0; i < supercell.number_of_atoms; i++) {
+	long ptr = 1;
+	if (supercell.pointers(i) == -1) ptr = 2;
+	outfile << boost::format("%8d %22.15f %22.15f %22.15f\n")
+	  % ptr
+	  % supercell.basis_vectors(i,0)
+	  % supercell.basis_vectors(i,1)
+	  % supercell.basis_vectors(i,2);
+      }
+      outfile.close();
+    }
+    
+  }
   
   return 0;
+
 }

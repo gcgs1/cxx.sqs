@@ -8,6 +8,9 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <iostream>
+#include <boost/numeric/ublas/io.hpp>
+
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/vector.hpp>
@@ -27,10 +30,6 @@ Supercell::Supercell(ublas::vector<long> sext,
   primitive_lattice_vectors_ = primitive_lattice_vectors;
   primitive_basis_vectors_ = primitive_basis_vectors;
   concentration_ = concentration;
-  
-}
-
-void Supercell::Build() {
 
   number_of_atoms = product(supercell_extension)*primitive_number_of_atoms_;
 
@@ -43,17 +42,17 @@ void Supercell::Build() {
     }
   }
 
-  ublas::matrix<double> basis_vectors(number_of_atoms,3);
+  ublas::matrix<double> basis(number_of_atoms,3);
   auto iat = 0;
   for (auto i = 0; i < primitive_number_of_atoms_; i++) {
     for (auto j = 0; j < supercell_extension(0); j++) {
       for (auto k = 0; k < supercell_extension(1); k++) {
         for (auto l = 0; l < supercell_extension(2); l++) {
           for (auto a = 0; a < 3; a++) {
-	    basis_vectors(iat,a) = primitive_basis_vectors_(i,a)
-	                         + j*primitive_lattice_vectors_(0,a)
-	                         + k*primitive_lattice_vectors_(1,a)
-	                         + l*primitive_lattice_vectors_(2,a);
+	    basis(iat,a) = primitive_basis_vectors_(i,a)
+	                 + j*primitive_lattice_vectors_(0,a)
+                         + k*primitive_lattice_vectors_(1,a)
+	                 + l*primitive_lattice_vectors_(2,a);
           }
           ublas::matrix_row<ublas::matrix<double>> b(basis_vectors,iat);
           iat++;
@@ -61,7 +60,7 @@ void Supercell::Build() {
       }
     }
   }
-
+  
   auto solute = concentration_*number_of_atoms;
   ublas::vector<long> tmp(number_of_atoms);
   for (auto i = 0; i < number_of_atoms; i++) {
@@ -72,6 +71,7 @@ void Supercell::Build() {
     }
   }
 
+  basis_vectors = basis;
   pointers = tmp;
   
 }

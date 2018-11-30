@@ -9,6 +9,7 @@
 */
 
 #include <boost/numeric/ublas/matrix_proxy.hpp>
+
 #include "neighbour.hxx"
 #include "utils.hxx"
 
@@ -18,6 +19,9 @@ Neighbour::Neighbour(unsigned long nbas,
   NumberOfAtoms = nbas;
   LatticeVectors = plat;
   BasisVectors = basis;
+}
+
+Neighbour::~Neighbour() {
 }
 
 void Neighbour::SetInverseLattice(ublas::matrix<double> iplat,
@@ -55,6 +59,10 @@ void Neighbour::GetSiteList(double rmax) {
   ublas::vector<long> linkl(smax);
   ublas::vector<long> head(blks);
   ublas::vector<double> sitex(3);
+
+  /* Make Sure Zero Vectors */
+  head.clear();
+  linkl.clear();
   
   ublas::matrix_row<ublas::matrix<double>> p0(LatticeVectors,0);
   ublas::matrix_row<ublas::matrix<double>> p1(LatticeVectors,1);
@@ -125,12 +133,12 @@ void Neighbour::GetNhbrList(double rmax) {
 
   ublas::vector<long> tot(NumberOfAtoms);
   ublas::vector<long> ptrs(650*NumberOfAtoms);
-
+  
   unsigned long nsum = 0;
   for (auto i = 0; i < NumberOfAtoms; i++) {
     tot(i) = 0;
     ublas::matrix_row<ublas::matrix<double>> b(BasisVectors,i);
-    ublas::vector<double> bx = ublas::prod(b,InverseLatticeVectors);
+    ublas::matrix_row<ublas::matrix<double>> bx(InverseBasisVectors,i);
     unsigned long icell = FindCell(bx);
     for (auto imx = -1; imx <= 1; imx++) {
       for (auto imy = -Blocks(0); imy <= Blocks(0); imy += Blocks(0)) {
