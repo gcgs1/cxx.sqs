@@ -33,7 +33,7 @@ int main(void) {
   unsigned long nbas = 1;
   ublas::matrix<double> plat(3,3);
   ublas::matrix<double> basis(nbas,3);
-  double rmax = 2.5;
+  double rmax = 3.0;
 
   /* Set Basis Vectors */
   basis(0,0) = 0.0; basis(0,1) = 0.0; basis(0,2) = 0.0;
@@ -80,7 +80,7 @@ int main(void) {
   
   /* Supercell Creation */
   ublas::vector<long> sext(3);
-  sext(0) = 30; sext(1) = 30; sext(2) = 30;
+  sext(0) = 60; sext(1) = 60; sext(2) = 20;
 
   double concentration = 0.05;
   
@@ -104,13 +104,12 @@ int main(void) {
     % supercell.lattice_vectors(2,2);
   
   /* Random Number Generator */
-  //boost::mt19937 mt(time(0));
-  boost::mt19937 mt;
+  boost::mt19937 mt(time(0));
   boost::uniform_int<> uni_dist;
   boost::variate_generator<boost::mt19937&,boost::uniform_int<>>
     generator(mt,uni_dist);
 
-  long nitf = 10000;
+  long nitf = 100000;
   double term = 0.0001;
 
   std::cout << boost::format("Number of Iterations      : %8d\n") % nitf;
@@ -121,29 +120,31 @@ int main(void) {
 
   double best = 1.0;
   long snum = 0;
+
+  /* Supercell Inverse */
+  ublas::matrix<double> isplat = inv3(supercell.lattice_vectors);
+  ublas::matrix<double> xsbasis(supercell.number_of_atoms,3);
+  for (auto i = 0; i < supercell.number_of_atoms; i++) {
+    ublas::matrix_row<ublas::matrix<double>> b(supercell.basis_vectors,i);
+    auto xb = prod(b,isplat);
+    for (auto a = 0; a < 3; a++) {
+      xsbasis(i,a) = xb(a);
+    }
+  }
+
+  Neighbour neighbour = Neighbour(supercell.number_of_atoms,
+				  supercell.lattice_vectors,
+				  supercell.basis_vectors);
+  
+  neighbour.SetInverseLattice(isplat,xsbasis);
+  neighbour.GetNhbrList(rmax);
+
+  long bnum = 0;
   
   for (long n = 0; n < nitf; n++) { 
     
     boost::range::random_shuffle(supercell.pointers,generator);
-    
-    /* Supercell Inverse */
-    ublas::matrix<double> isplat = inv3(supercell.lattice_vectors);
-    ublas::matrix<double> xsbasis(supercell.number_of_atoms,3);
-    for (auto i = 0; i < supercell.number_of_atoms; i++) {
-      ublas::matrix_row<ublas::matrix<double>> b(supercell.basis_vectors,i);
-      auto xb = prod(b,isplat);
-      for (auto a = 0; a < 3; a++) {
-	xsbasis(i,a) = xb(a);
-      }
-    }
-    
-    Neighbour neighbour = Neighbour(supercell.number_of_atoms,
-				    supercell.lattice_vectors,
-				    supercell.basis_vectors);
-    
-    neighbour.SetInverseLattice(isplat,xsbasis);
-    neighbour.GetNhbrList(rmax);
-    
+        
     /* Correlation Function Calculation */
     Correlation correlation = Correlation();
     correlation.Calculate(neighbour,supercell);
@@ -151,11 +152,15 @@ int main(void) {
 
     bool bestq = (result < best);
     bool writeq = (result < term);
-    if (bestq) best = result;
+    if (bestq) {
+      best = result;
+      bnum = snum;
+    }
     
-    std::cout << boost::format("Iteration                 : %8d\n") % n;
-    std::cout << boost::format("Mean Error                : %16.7f\n") % result;
-    std::cout << boost::format("Least Error               : %16.7f\n") % best;
+    std::cout << boost::format("Iteration                 : %8d\n") % (n+1);
+    std::cout << boost::format("Mean Error                : %16.7f\n")
+      % result;
+    std::cout << boost::format("Least Error      %8d : %16.7f\n") % bnum % best;
     if (writeq) {
       snum++;
       std::cout << "Accept\n";
