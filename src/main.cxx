@@ -17,6 +17,7 @@
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/variate_generator.hpp>
 #include <boost/range/algorithm.hpp>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 
@@ -29,37 +30,26 @@ namespace ublas = boost::numeric::ublas;
 
 int main(void) {
 
-  //unsigned long nbas = 1;
-  unsigned long nbas = 1;
+  unsigned long nbas = 2;
   ublas::matrix<double> plat(3,3);
   ublas::matrix<double> basis(nbas,3);
-  double rmax = 3.0;
+  double rmax = 2.0;
 
   /* Set Basis Vectors */
-  basis(0,0) = 0.0; basis(0,1) = 0.0; basis(0,2) = 0.0;
+  double isqrt2 = 1/std::sqrt(2);
+  double isqrt3 = 1/std::sqrt(3);
+  double isqrt6 = 1/std::sqrt(6);
 
-  /*
-  double q = 1.62;
-  basis(0,0) = 0.0; basis(0,1) = 0.0; basis(0,2) = 0.0;
-  basis(1,0) = 0.5; basis(1,1) = std::sqrt(3)/6; basis(1,2) = 0.5*q;
-  */
-  
-  /* Set Lattice Vectors */
-  plat(0,0) =  0.5; plat(0,1) =  0.5; plat(0,2) = -0.5;
-  plat(1,0) = -0.5; plat(1,1) =  0.5; plat(1,2) =  0.5;
-  plat(2,0) =  0.5; plat(2,1) = -0.5; plat(2,2) =  0.5;
+  basis(0,0) =      0.0; basis(0,1) =          0.0; basis(0,2) =            0.0;
+  basis(1,0) =   isqrt6; basis(1,1) =       isqrt2; basis(1,2) =         isqrt3;
 
-  /*
-  plat(0,0) =  1.0; plat(0,1) =              0.0; plat(0,2) = 0.0;
-  plat(1,0) = -0.5; plat(1,1) = 0.5*std::sqrt(3); plat(1,2) = 0.0;
-  plat(2,0) =  1.0; plat(2,1) =              0.0; plat(2,2) =   q;
-  */
+  plat(0,0)  = 2*isqrt6; plat(0,1)  =          0.0; plat(0,2)  = std::sqrt(3)/6;
+  plat(1,0)  =      0.0; plat(1,1)  = std::sqrt(2); plat(1,2)  =            0.0;
+  plat(2,0)  =      0.0; plat(2,1)  =          0.0; plat(2,2)  = std::sqrt(3)/2;
 
   /* Primitive I/O */
   std::cout << boost::format("Primitive Number of Atoms : %8d\n") % nbas;
-
   std::cout << boost::format("Pair Cut Off Radius       : %16.7f\n") % rmax;
-  
   std::cout << boost::format("Primitive Lattice Vectors : %16.7f %16.7f %16.7f\n")
     % plat(0,0) % plat(0,1) % plat(0,2);
   std::cout << boost::format("                            %16.7f %16.7f %16.7f\n")
@@ -80,12 +70,23 @@ int main(void) {
   
   /* Supercell Creation */
   ublas::vector<long> sext(3);
-  sext(0) = 60; sext(1) = 60; sext(2) = 20;
+  sext(0) = 100; sext(1) = 60; sext(2) = 3;
 
   double concentration = 0.05;
   
   Supercell supercell = Supercell(sext,nbas,plat,basis,concentration);
 
+  /* Supercell Inverse */
+  ublas::matrix<double> isplat = inv3(supercell.lattice_vectors);
+  ublas::matrix<double> xsbasis(supercell.number_of_atoms,3);
+  for (auto i = 0; i < supercell.number_of_atoms; i++) {
+    ublas::matrix_row<ublas::matrix<double>> b(supercell.basis_vectors,i);
+    auto xb = prod(b,isplat);
+    for (auto a = 0; a < 3; a++) {
+      xsbasis(i,a) = xb(a);
+    }
+  }
+  
   /* Supercell I/O */
   std::cout << boost::format("Supercell Number of Atoms : %8d\n")
     % supercell.number_of_atoms;
@@ -118,20 +119,6 @@ int main(void) {
     % ((2*concentration-1)*(2*concentration-1)); 
   std::cout << boost::format("SQS Accept Tolerance      : %16.7f\n\n") % term;
 
-  double best = 1.0;
-  long snum = 0;
-
-  /* Supercell Inverse */
-  ublas::matrix<double> isplat = inv3(supercell.lattice_vectors);
-  ublas::matrix<double> xsbasis(supercell.number_of_atoms,3);
-  for (auto i = 0; i < supercell.number_of_atoms; i++) {
-    ublas::matrix_row<ublas::matrix<double>> b(supercell.basis_vectors,i);
-    auto xb = prod(b,isplat);
-    for (auto a = 0; a < 3; a++) {
-      xsbasis(i,a) = xb(a);
-    }
-  }
-
   Neighbour neighbour = Neighbour(supercell.number_of_atoms,
 				  supercell.lattice_vectors,
 				  supercell.basis_vectors);
@@ -139,6 +126,8 @@ int main(void) {
   neighbour.SetInverseLattice(isplat,xsbasis);
   neighbour.GetNhbrList(rmax);
 
+  double best = 1.0;
+  long snum = 0;
   long bnum = 0;
   
   for (long n = 0; n < nitf; n++) { 
@@ -167,7 +156,6 @@ int main(void) {
     } else {
       std::cout << "Reject\n";
     }
-
     
     for (auto i = 0; i < correlation.number; i++) {
       std::cout << boost::format("  %16.7f  %5d  %16.7f  %16.7f\n")

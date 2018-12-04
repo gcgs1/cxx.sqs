@@ -1,0 +1,16 @@
+cxx.sqs
+-------
+
+A lightweight special quasi-random structure generator. It is designed
+specifically for large supercells.
+
+Install
+-------
+
+Requires the boost library headers. Assumed for now to be contained
+within a folder named include/ in your home directory.
+
+TODO
+----
+
+1) Proper I/O system. Currently lattice information is hard coded.
